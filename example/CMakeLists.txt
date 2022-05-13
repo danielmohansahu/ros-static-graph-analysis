@@ -18,7 +18,7 @@ target_link_libraries(find-class-decls
   clangTooling
   )
 
-# add dynamic pluging example
+# add dynamic plugin example
 # https://github.com/llvm/llvm-project/tree/main/clang/examples/PrintFunctionNames
 
 # If we don't need RTTI or EH, there's no reason to export anything
@@ -34,3 +34,8 @@ endif()
 
 add_library(PrintFunctionNames MODULE PrintFunctionNames.cpp)
 target_include_directories(PrintFunctionNames PRIVATE ${CLANG_INCLUDE_DIRS})
+
+# add find named class plugin example
+
+add_library(FindNamedClassPlugin MODULE FindClassDeclsPlugin.cpp)
+target_include_directories(FindNamedClassPlugin PRIVATE ${CLANG_INCLUDE_DIRS})
