@@ -9,11 +9,17 @@ mkdir example/build
 cd example/build
 cmake ..
 make
+cd ..
 ```
 
 Usage instructions (example):
 
 ```bash
-./find-class-decls "namespace n { namespace m { class C {}; } }"
+./build/find-class-decls "namespace n { namespace m { class C {}; } }"
 # Found declaration at 1:29
+```
+
+```bash
+# examine a C++ file and print out top level elements
+clang -cc1 -load build/libPrintFunctionNames.so -plugin print-fns foo.cc
 ```
