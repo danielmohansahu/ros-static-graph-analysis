@@ -23,3 +23,8 @@ Usage instructions (example):
 # examine a C++ file and print out top level elements
 clang -cc1 -load build/libPrintFunctionNames.so -plugin print-fns foo.cc
 ```
+
+```bash
+# examine a C++ file and print out the location of a fully resolved class
+clang -cc1 -load build/libFindNamedClassPlugin.so -plugin find-named-class foo.cc
+```
