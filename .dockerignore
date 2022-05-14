@@ -13,5 +13,11 @@
 # ignore everything that has an extension (theoretically all non-directories)
 test/**/*.*
 
+# also completely ignore build spaces
+test/devel
+test/build
+test/install
+test/logs
+
 # allow all package.xml files for rosdep
 !test/**/package.xml
