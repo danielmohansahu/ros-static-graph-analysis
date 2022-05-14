@@ -31,8 +31,12 @@
 *.out
 *.app
 
+# Vim Files
+*.swp
+
 # AST output
 *.ast
 
 # Expected build directory
 build/
+
