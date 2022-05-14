@@ -15,12 +15,13 @@ RUN apt-get update -qq \
       gdb \
     && rm -rf /var/lib/apt/lists/*
 
-# install clang and libclang stuff
+# install core utilities used in clang plugin
 RUN apt-get update -qq \
     && apt-get install -q -y \
       clang \
       libclang-dev \
       cmake \
+      libyaml-cpp-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # install general ROS packages for building and analysis

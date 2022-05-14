@@ -11,6 +11,9 @@
 #include <string>
 #include <unordered_map>
 
+// YAML
+#include <yaml-cpp/yaml.h>
+
 // CLANG
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -56,6 +59,13 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
     Policy.adjustForCPlusPlus();
   }
 
+  /* Accessor for the collected metadata.
+   */
+  YAML::Node GetMetadata()
+  {
+    return Metadata;
+  }
+
   /* Evaluate a single member function call.
    *
    * I.e.:
@@ -95,6 +105,8 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
   clang::PrintingPolicy Policy;
   // collection of all the methods we're looking for
   std::unordered_map<std::string,std::string> ROSMethods;
+  // YAML representation of collected metadata
+  YAML::Node Metadata;
 };
 
 /* Custom AST Consumer to configure calls to the Visitor.
@@ -105,19 +117,35 @@ class FindROSPrimitivesConsumer : public clang::ASTConsumer
   FindROSPrimitivesConsumer(clang::ASTContext *Context,
                             clang::CompilerInstance *Instance,
                             std::set<std::string> ParsedTemplates)
-      : Visitor(Context, Instance), ParsedTemplates(ParsedTemplates)
+      : Visitor(Context, Instance), CI(CI), ParsedTemplates(ParsedTemplates)
   {}
 
   /* Core method to analyze a given element in the AST.
    */
   virtual void HandleTranslationUnit(clang::ASTContext &Context)
   {
+    // process the given translation unit
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
+
+    // get collected metadata
+    YAML::Node metadata = Visitor.GetMetadata();
+
+    // write metadata to file
+    std::error_code ec;
+    llvm::raw_fd_ostream file(llvm::StringRef("ros_metadata.yaml"), ec);
+    if (!ec)
+    {
+      // file << metadata;
+      file.close();
+    }
+    else
+      console_print(CI, "Unable to write ROS Metadata to file.", clang::DiagnosticsEngine::Warning);
   }
 
  private:
   // Some of these are currently unused, but may be required at later stages of development.
   std::set<std::string> ParsedTemplates;
+  clang::CompilerInstance* CI;
   FindROSPrimitivesVisitor Visitor;
 };
 
