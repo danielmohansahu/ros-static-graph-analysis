@@ -69,7 +69,7 @@ bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *
 
       // display argument name and value
       ss << Call->getMethodDecl()->getParamDecl(i)->getNameAsString() << "=" << s.str();
-      if (i < Call->getNumArgs())
+      if (i < Call->getNumArgs() - 1)
         ss << ", ";
     }
     ss << ")";
