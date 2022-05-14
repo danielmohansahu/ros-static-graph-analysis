@@ -18,7 +18,7 @@ namespace find_ros_primitives
 
 bool FindROSPrimitivesVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *Declaration)
 {
-  if (Declaration->getQualifiedNameAsString() == "ros::Subscriber")
+  if (Declaration->getQualifiedNameAsString() == "ros::Publisher")
   {
     FullSourceLoc FullLocation = Context->getFullLoc(Declaration->getBeginLoc());
     if (FullLocation.isValid())
