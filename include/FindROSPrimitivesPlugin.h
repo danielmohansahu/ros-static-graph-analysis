@@ -16,7 +16,7 @@
 #include "clang/Frontend/CompilerInstance.h"
 
 // maximum number of characters per output line
-#define MAXCHARS 80
+#define MAXCHARS 120
 
 namespace find_ros_primitives
 {
@@ -38,9 +38,26 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
   explicit FindROSPrimitivesVisitor(clang::ASTContext *Context, clang::CompilerInstance *CI)
     : Context(Context), CI(CI) {}
 
-  /* Evaluate a single declaration.
+  /* Evaluate a single member function call.
+   *
+   * E.g.:
+   *  - ros::NodeHandle::advertise
+   *  - ros::NodeHandle::param
+   *
+   * TODO:
+   *  - Does this also cover class constructors?
    */
-  bool VisitCXXRecordDecl(clang::CXXRecordDecl *Declaration);
+  bool VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *Call);
+
+  /* Evaluate a single function call (any)
+   *
+   * E.g.:
+   *  - ros::init
+   *
+   * TODO:
+   *  - Does this also cover member functions?
+   */
+  bool VisitCallExpr(clang::CallExpr *Call);
  
  private:
   clang::ASTContext *Context;

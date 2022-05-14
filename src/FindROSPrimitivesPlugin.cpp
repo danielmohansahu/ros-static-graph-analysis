@@ -31,26 +31,35 @@ inline void console_print(clang::CompilerInstance* CI,
   D.Report(D.getCustomDiagID(level, msg));
 }
 
-bool FindROSPrimitivesVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *Declaration)
+bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *Call)
 {
-  if (Declaration->getQualifiedNameAsString() == "ros::Publisher")
+  if (Call->getMethodDecl()->getQualifiedNameAsString() == "ros::NodeHandle::advertise")
   {
-    FullSourceLoc FullLocation = Context->getFullLoc(Declaration->getBeginLoc());
-    if (FullLocation.isValid())
-    {
-      // get source manager to decode file name
-      SourceManager& SrcMgr = Context->getSourceManager();
+    // check if this location definition is valid; return early otherwise
+    FullSourceLoc FullLocation = Context->getFullLoc(Call->getBeginLoc());
+    if (!FullLocation.isValid())
+      return true;
 
-      // construct message
-      std::stringstream ss;
-      ss << "Found ros::Publisher at " << FullLocation.getSpellingLineNumber()
-         << ":" << FullLocation.getSpellingColumnNumber() << " in "
-         << SrcMgr.getFilename(FullLocation).str();
+    // check if this is defined in a header we want to ignore
+    // @TODO make this less hardcoded and more extensible
+    //  or, alternatively, figure out how to use ASTMatchers to avoid the need entirely.
+    const std::string filename = Context->getSourceManager().getFilename(FullLocation).str();
+    if (filename.rfind("/opt/ros/") == 0 && filename.rfind("/include/ros/") != std::string::npos)
+      return true;
 
-      // display message
-      console_print(CI, ss.str());
-    }
+    // if we made it this far this is a good match - construct message
+    std::stringstream ss;
+    ss << "Found ros::Publisher at " << FullLocation.getSpellingLineNumber()
+       << ":" << FullLocation.getSpellingColumnNumber() << " in " << filename;
+
+    // display message
+    console_print(CI, ss.str());
   }
+  return true;
+}
+
+bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
+{
   return true;
 }
 
