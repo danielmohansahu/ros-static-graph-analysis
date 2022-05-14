@@ -48,11 +48,12 @@ bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *
       return true;
 
     // if we made it this far this is a good match - construct message
-    std::string class_name = match->second;
+    const auto [class_name, class_message] = *match;
     std::stringstream ss;
     // display function name and location message
-    ss << "Found " << class_name << " use at " << FullLocation.getSpellingLineNumber()
-       << ":" << FullLocation.getSpellingColumnNumber() << " in " << filename;
+    ss << "Found " << class_name << class_message;
+    ss << "\n\t\t loc:  " << FullLocation.getSpellingLineNumber() << ":"
+       << FullLocation.getSpellingColumnNumber() << " in " << filename;
 
     // extract argument information
     ss << "\n\t\t args: (";
