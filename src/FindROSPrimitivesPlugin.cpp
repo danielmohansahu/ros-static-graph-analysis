@@ -54,6 +54,32 @@ bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *
 
     // display message
     console_print(CI, ss.str());
+
+    // extract argument information
+    std::stringstream ss2;
+    ss2 << "  parameters: (";
+    for (const auto arg : Call->getMethodDecl()->parameters())
+    {
+      ss2 << arg->getNameAsString() << ", ";
+    }
+    ss2 << ")";
+    console_print(CI, ss2.str());
+
+    std::stringstream ss3;
+    ss3 << "  args:       (";
+    for (const auto arg : Call->arguments())
+    {
+      if (arg->isEvaluatable(*Context))
+      {
+      //    ss3 << Call->getArg(arg) << ", ";
+      }
+      else
+      {
+        ss3 << "Unevaluated(" << arg->getStmtClassName() << "), ";
+      }
+    }
+    ss3 << ")";
+    console_print(CI, ss3.str());
   }
   return true;
 }
