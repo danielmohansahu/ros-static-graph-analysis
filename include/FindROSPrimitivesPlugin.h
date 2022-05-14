@@ -8,14 +8,24 @@
 #pragma once
 
 // STL
+#include <string>
 
 // CLANG
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Frontend/CompilerInstance.h"
 
+// maximum number of characters per output line
+#define MAXCHARS 80
+
 namespace find_ros_primitives
 {
+
+/* Display console output.
+ */
+inline void console_print(clang::CompilerInstance* CI,
+                          const std::string& message,
+                          const clang::DiagnosticsEngine::Level& level = clang::DiagnosticsEngine::Remark);
 
 /* Custom Recursive AST Visitor to analyze each declaration in the AS Tree.
  *

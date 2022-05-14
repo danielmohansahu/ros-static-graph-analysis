@@ -16,6 +16,21 @@ using namespace clang;
 namespace find_ros_primitives
 {
 
+inline void console_print(clang::CompilerInstance* CI,
+                          const std::string& message,
+                          const clang::DiagnosticsEngine::Level& level)
+{
+  // display the given string message as compiler output.
+  char msg[MAXCHARS];
+  memset(msg, ' ', MAXCHARS);
+  size_t length = message.copy(msg, MAXCHARS);
+  msg[length] = '\0';
+
+  // print message via compiler instance
+  clang::DiagnosticsEngine &D = CI->getDiagnostics();
+  D.Report(D.getCustomDiagID(level, msg));
+}
+
 bool FindROSPrimitivesVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *Declaration)
 {
   if (Declaration->getQualifiedNameAsString() == "ros::Publisher")
@@ -26,20 +41,14 @@ bool FindROSPrimitivesVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *Declarat
       // get source manager to decode file name
       SourceManager& SrcMgr = Context->getSourceManager();
 
-      // construct message (nonsense involving chars which should be cleaned up)
+      // construct message
       std::stringstream ss;
       ss << "Found ros::Publisher at " << FullLocation.getSpellingLineNumber()
          << ":" << FullLocation.getSpellingColumnNumber() << " in "
          << SrcMgr.getFilename(FullLocation).str();
 
-      char msg[80];
-      memset(msg, ' ', 80);
-      std::size_t length = ss.str().copy(msg, 80);
-      msg[length] = '\0';
-
-      // print message via compiler instance
-      clang::DiagnosticsEngine &D = CI->getDiagnostics();
-      D.Report(D.getCustomDiagID(DiagnosticsEngine::Remark, msg));
+      // display message
+      console_print(CI, ss.str());
     }
   }
   return true;
