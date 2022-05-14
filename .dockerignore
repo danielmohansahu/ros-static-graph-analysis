@@ -1,0 +1,17 @@
+# Docker ignore file
+# 
+# The goal here is to ignore everything in the test/ directory
+#  to prevent rebuilding the development image unless package.xml
+#  files have changed. This is somewhat hacky, due to the following
+#  issue:
+# https://github.com/moby/moby/issues/30018
+#
+# Specifically, this means that we'll need to rebuild if extensionless
+#  files in the test/ directory are modified, or if directories themselves
+#  are created or deleted. Still, better than nothing.
+
+# ignore everything that has an extension (theoretically all non-directories)
+test/**/*.*
+
+# allow all package.xml files for rosdep
+!test/**/package.xml
