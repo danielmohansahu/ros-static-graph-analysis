@@ -4,11 +4,6 @@
 
 // CLANG
 #include "clang/Frontend/FrontendPluginRegistry.h"
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/FrontendAction.h"
-#include "clang/Tooling/Tooling.h"
 
 // CUSTOM
 #include "FindROSPrimitivesPlugin.h"
@@ -24,9 +19,11 @@ bool FindROSPrimitivesVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *Declarat
   {
     FullSourceLoc FullLocation = Context->getFullLoc(Declaration->getBeginLoc());
     if (FullLocation.isValid())
-      llvm::outs() << "Found declaration at "
+      llvm::errs() << "Found declaration at "
                    << FullLocation.getSpellingLineNumber() << ":"
                    << FullLocation.getSpellingColumnNumber() << "\n";
+    else
+      llvm::errs() << "Did not find declaration." << "\n";
   }
   return true;
 }
