@@ -33,3 +33,6 @@
 
 # AST output
 *.ast
+
+# Expected build directory
+build/
