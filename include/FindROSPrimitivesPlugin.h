@@ -36,7 +36,11 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
 {
  public:
   explicit FindROSPrimitivesVisitor(clang::ASTContext *Context, clang::CompilerInstance *CI)
-    : Context(Context), CI(CI) {}
+    : Context(Context), CI(CI), Policy(clang::PrintingPolicy(clang::LangOptions()))
+  {
+    // format for C++
+    Policy.adjustForCPlusPlus();
+  }
 
   /* Evaluate a single member function call.
    *
@@ -60,8 +64,12 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
   bool VisitCallExpr(clang::CallExpr *Call);
  
  private:
+  // Context in the AST
   clang::ASTContext *Context;
+  // pointer to the compiler instance, for logging
   clang::CompilerInstance *CI;
+  // Language formatting
+  clang::PrintingPolicy Policy;
 };
 
 /* Custom AST Consumer to configure calls to the Visitor.

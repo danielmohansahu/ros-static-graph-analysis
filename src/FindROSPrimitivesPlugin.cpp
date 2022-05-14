@@ -42,7 +42,7 @@ bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *
 
     // check if this is defined in a header we want to ignore
     // @TODO make this less hardcoded and more extensible
-    //  or, alternatively, figure out how to use ASTMatchers to avoid the need entirely.
+    //  or, alternatively, figure out how to use ASTMatchers to avoid the need entirely...
     const std::string filename = Context->getSourceManager().getFilename(FullLocation).str();
     if (filename.rfind("/opt/ros/") == 0 && filename.rfind("/include/ros/") != std::string::npos)
       return true;
@@ -52,34 +52,31 @@ bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *
     ss << "Found ros::Publisher at " << FullLocation.getSpellingLineNumber()
        << ":" << FullLocation.getSpellingColumnNumber() << " in " << filename;
 
-    // display message
+    // display function name and location message
     console_print(CI, ss.str());
 
     // extract argument information
-    std::stringstream ss2;
-    ss2 << "  parameters: (";
-    for (const auto arg : Call->getMethodDecl()->parameters())
+    ss.str(std::string());
+    ss << "  args: (";
+    for (unsigned i = 0; i != Call->getNumArgs(); ++i)
     {
-      ss2 << arg->getNameAsString() << ", ";
-    }
-    ss2 << ")";
-    console_print(CI, ss2.str());
-
-    std::stringstream ss3;
-    ss3 << "  args:       (";
-    for (const auto arg : Call->arguments())
-    {
-      if (arg->isEvaluatable(*Context))
-      {
-      //    ss3 << Call->getArg(arg) << ", ";
-      }
+      // get argument value (or default)
+      std::string TypeS;
+      llvm::raw_string_ostream s(TypeS);
+      if (Call->getArg(i)->isDefaultArgument())
+        Call->getMethodDecl()->getParamDecl(i)->getDefaultArg()->printPretty(s, 0, Policy);
       else
-      {
-        ss3 << "Unevaluated(" << arg->getStmtClassName() << "), ";
-      }
+        Call->getArg(i)->printPretty(s, 0, Policy); 
+
+      // display argument name and value
+      ss << Call->getMethodDecl()->getParamDecl(i)->getNameAsString() << "=" << s.str();
+      if (i < Call->getNumArgs())
+        ss << ", ";
     }
-    ss3 << ")";
-    console_print(CI, ss3.str());
+    ss << ")";
+
+    // display function argument values
+    console_print(CI, ss.str());
   }
   return true;
 }
