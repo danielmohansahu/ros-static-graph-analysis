@@ -22,9 +22,8 @@ inline void console_print(clang::CompilerInstance* CI,
 {
   // display the given string message as compiler output.
   char msg[MAXCHARS];
-  memset(msg, ' ', MAXCHARS);
-  size_t length = message.copy(msg, MAXCHARS);
-  msg[length] = '\0';
+  memset(msg, '\0', MAXCHARS);
+  message.copy(msg, MAXCHARS);
 
   // print message via compiler instance
   clang::DiagnosticsEngine &D = CI->getDiagnostics();

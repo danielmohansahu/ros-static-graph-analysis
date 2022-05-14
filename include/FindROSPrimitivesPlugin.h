@@ -16,7 +16,7 @@
 #include "clang/Frontend/CompilerInstance.h"
 
 // maximum number of characters per output line
-#define MAXCHARS 120
+#define MAXCHARS 255
 
 namespace find_ros_primitives
 {
