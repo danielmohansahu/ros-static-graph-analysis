@@ -25,8 +25,8 @@ namespace find_ros_primitives
 class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimitivesVisitor>
 {
  public:
-  explicit FindROSPrimitivesVisitor(clang::ASTContext *Context)
-    : Context(Context) {}
+  explicit FindROSPrimitivesVisitor(clang::ASTContext *Context, clang::CompilerInstance *CI)
+    : Context(Context), CI(CI) {}
 
   /* Evaluate a single declaration.
    */
@@ -34,6 +34,7 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
  
  private:
   clang::ASTContext *Context;
+  clang::CompilerInstance *CI;
 };
 
 /* Custom AST Consumer to configure calls to the Visitor.
@@ -42,9 +43,9 @@ class FindROSPrimitivesConsumer : public clang::ASTConsumer
 {
  public:
   FindROSPrimitivesConsumer(clang::ASTContext *Context,
-                            clang::CompilerInstance &Instance,
+                            clang::CompilerInstance *Instance,
                             std::set<std::string> ParsedTemplates)
-      : Visitor(Context), Instance(Instance), ParsedTemplates(ParsedTemplates)
+      : Visitor(Context, Instance), ParsedTemplates(ParsedTemplates)
   {}
 
   /* Core method to analyze a given element in the AST.
@@ -56,7 +57,6 @@ class FindROSPrimitivesConsumer : public clang::ASTConsumer
 
  private:
   // Some of these are currently unused, but may be required at later stages of development.
-  clang::CompilerInstance &Instance;
   std::set<std::string> ParsedTemplates;
   FindROSPrimitivesVisitor Visitor;
 };
@@ -72,7 +72,7 @@ class FindROSPrimitivesAction : public clang::PluginASTAction
   std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance &CI,
                                                         llvm::StringRef) override
   {
-    return std::make_unique<FindROSPrimitivesConsumer>(&CI.getASTContext(), CI, ParsedTemplates);
+    return std::make_unique<FindROSPrimitivesConsumer>(&CI.getASTContext(), &CI, ParsedTemplates);
   }
 
   /* Parse command line input arguments.

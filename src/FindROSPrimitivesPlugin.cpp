@@ -2,6 +2,9 @@
  *
  */
 
+// STL
+#include <sstream>
+
 // CLANG
 #include "clang/Frontend/FrontendPluginRegistry.h"
 
@@ -15,15 +18,29 @@ namespace find_ros_primitives
 
 bool FindROSPrimitivesVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *Declaration)
 {
-  if (Declaration->getQualifiedNameAsString() == "ros::init")
+  if (Declaration->getQualifiedNameAsString() == "ros::Subscriber")
   {
     FullSourceLoc FullLocation = Context->getFullLoc(Declaration->getBeginLoc());
     if (FullLocation.isValid())
-      llvm::errs() << "Found declaration at "
-                   << FullLocation.getSpellingLineNumber() << ":"
-                   << FullLocation.getSpellingColumnNumber() << "\n";
-    else
-      llvm::errs() << "Did not find declaration." << "\n";
+    {
+      // get source manager to decode file name
+      SourceManager& SrcMgr = Context->getSourceManager();
+
+      // construct message (nonsense involving chars which should be cleaned up)
+      std::stringstream ss;
+      ss << "Found ros::Publisher at " << FullLocation.getSpellingLineNumber()
+         << ":" << FullLocation.getSpellingColumnNumber() << " in "
+         << SrcMgr.getFilename(FullLocation).str();
+
+      char msg[80];
+      memset(msg, ' ', 80);
+      std::size_t length = ss.str().copy(msg, 80);
+      msg[length] = '\0';
+
+      // print message via compiler instance
+      clang::DiagnosticsEngine &D = CI->getDiagnostics();
+      D.Report(D.getCustomDiagID(DiagnosticsEngine::Remark, msg));
+    }
   }
   return true;
 }
