@@ -32,7 +32,8 @@ inline void console_print(clang::CompilerInstance* CI,
 
 bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *Call)
 {
-  if (Call->getMethodDecl()->getQualifiedNameAsString() == "ros::NodeHandle::advertise")
+  if (const auto match = ROSMethods.find(Call->getMethodDecl()->getQualifiedNameAsString())
+      ; match != ROSMethods.end())
   {
     // check if this location definition is valid; return early otherwise
     FullSourceLoc FullLocation = Context->getFullLoc(Call->getBeginLoc());
@@ -47,16 +48,14 @@ bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *
       return true;
 
     // if we made it this far this is a good match - construct message
+    std::string class_name = match->second;
     std::stringstream ss;
-    ss << "Found ros::Publisher at " << FullLocation.getSpellingLineNumber()
+    // display function name and location message
+    ss << "Found " << class_name << " use at " << FullLocation.getSpellingLineNumber()
        << ":" << FullLocation.getSpellingColumnNumber() << " in " << filename;
 
-    // display function name and location message
-    console_print(CI, ss.str());
-
     // extract argument information
-    ss.str(std::string());
-    ss << "  args: (";
+    ss << "\n\t\t args: (";
     for (unsigned i = 0; i != Call->getNumArgs(); ++i)
     {
       // get argument value (or default)

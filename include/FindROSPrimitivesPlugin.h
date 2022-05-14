@@ -9,6 +9,7 @@
 
 // STL
 #include <string>
+#include <unordered_map>
 
 // CLANG
 #include "clang/AST/ASTConsumer.h"
@@ -36,7 +37,10 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
 {
  public:
   explicit FindROSPrimitivesVisitor(clang::ASTContext *Context, clang::CompilerInstance *CI)
-    : Context(Context), CI(CI), Policy(clang::PrintingPolicy(clang::LangOptions()))
+    : Context(Context), CI(CI), Policy(clang::PrintingPolicy(clang::LangOptions())),
+      ROSMethods( {
+        {"ros::NodeHandle::advertise", "ros::Publisher"}
+      } )
   {
     // format for C++
     Policy.adjustForCPlusPlus();
@@ -44,9 +48,18 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
 
   /* Evaluate a single member function call.
    *
-   * E.g.:
+   * I.e.:
    *  - ros::NodeHandle::advertise
+   *  - ros::NodeHandle::subscribe
+   *  - ros::NodeHandle::advertiseService
+   *  - ros::NodeHandle::serviceClient
    *  - ros::NodeHandle::param
+   *  - ros::NodeHandle::deleteParam
+   *  - ros::NodeHandle::getParam
+   *  - ros::NodeHandle::getParamCached
+   *  - ros::NodeHandle::hasParam
+   *  - ros::NodeHandle::searchParam
+   *  - ros::NodeHandle::setParam
    *
    * TODO:
    *  - Does this also cover class constructors?
@@ -55,7 +68,7 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
 
   /* Evaluate a single function call (any)
    *
-   * E.g.:
+   * I.e.:
    *  - ros::init
    *
    * TODO:
@@ -70,6 +83,8 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
   clang::CompilerInstance *CI;
   // Language formatting
   clang::PrintingPolicy Policy;
+  // collection of all the methods we're looking for
+  std::unordered_map<std::string,std::string> ROSMethods;
 };
 
 /* Custom AST Consumer to configure calls to the Visitor.
