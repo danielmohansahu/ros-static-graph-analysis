@@ -8,6 +8,7 @@
 #pragma once
 
 // STL
+#include <fstream>
 #include <string>
 #include <unordered_map>
 
@@ -21,6 +22,9 @@
 
 // maximum number of characters per output line
 #define MAXCHARS 512
+
+// file name to write metadata
+#define METADATA_FILE "ros_primitives.yaml"
 
 namespace find_ros_primitives
 {
@@ -131,15 +135,9 @@ class FindROSPrimitivesConsumer : public clang::ASTConsumer
     YAML::Node metadata = Visitor.GetMetadata();
 
     // write metadata to file
-    std::error_code ec;
-    llvm::raw_fd_ostream file(llvm::StringRef("ros_metadata.yaml"), ec);
-    if (!ec)
-    {
-      // file << metadata;
-      file.close();
-    }
-    else
-      console_print(CI, "Unable to write ROS Metadata to file.", clang::DiagnosticsEngine::Warning);
+    std::ofstream file(METADATA_FILE);
+    file << metadata;
+    file.close();
   }
 
  private:
