@@ -3,6 +3,9 @@
  * Author: Daniel M. Sahu
  */
 
+// STL
+#include <assert.h>
+
 // Custom
 #include "ROSPrimitiveMatcher.h"
 
@@ -27,7 +30,18 @@ bool ROSPrimitiveMatcher::is_match(const std::string& function, const std::strin
 
 void ROSPrimitiveMatcher::add(const std::string& function, const LocType& location, const std::vector<ArgType>& args)
 {
-  // @TODO
+  // sanity check
+  assert(ROSMethods.find(function) != ROSMethods.end());
+
+  // get the primitive name
+  const std::string primitive = ROSMethods.find(function)->second;
+
+  // store this information in YAML format
+  YAML::Node data;
+  data["loc"] = location.as_yaml();
+  for (const auto arg : args)
+    data["args"].push_back(arg.as_yaml());
+  metadata[primitive].push_back(data);
 }
 
 void ROSPrimitiveMatcher::dump(const std::string& base_filepath) const
@@ -43,10 +57,25 @@ void ROSPrimitiveMatcher::dump(const std::string& base_filepath) const
   file.close();
 }
 
-std::optional<std::string> ROSPrimitiveMatcher::summarize() const
+std::optional<std::string> ROSPrimitiveMatcher::summarize(const std::string& base_filepath) const
 {
-  // @TODO
-  return std::nullopt;
+  // return nothing if we have no data
+  if (metadata.size() == 0)
+    return std::nullopt;
+
+  // generate summary
+  std::stringstream ss;
+  ss << "Found ";
+  for (auto it = metadata.begin(); it != metadata.end(); ++it)
+  {
+    ss << it->second.size() << " " << it->first.as<std::string>();
+    if (std::distance(it, metadata.end()) > 1)
+      ss << ", ";
+  }
+  ss << " in " << std::filesystem::path(base_filepath).filename().string();
+
+  // return resulting summary
+  return std::make_optional(ss.str());
 }
 
 } // namespace find_ros_primitives

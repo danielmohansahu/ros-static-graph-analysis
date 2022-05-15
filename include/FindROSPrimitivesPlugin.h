@@ -53,7 +53,7 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
     ROSMatcher.dump(InFile);
 
     // also print a summary to console
-    if (const auto summary = ROSMatcher.summarize(); summary)
+    if (const auto summary = ROSMatcher.summarize(InFile); summary)
       console_print(CI, *summary);
   }
 

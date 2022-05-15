@@ -30,7 +30,7 @@ struct ArgType
     : index(index), name(name), value(value), type(type), default_value(default_value) {}
 
   // convert to a YAML node
-  YAML::Node as_yaml()
+  YAML::Node as_yaml() const
   {
     YAML::Node res;
     res["index"] = index;
@@ -57,7 +57,7 @@ struct LocType
     : filename(filename), line(line), column(column) {}
 
   // convert to a YAML node
-  YAML::Node as_yaml()
+  YAML::Node as_yaml() const
   {
     YAML::Node res;
     res["filename"] = filename;

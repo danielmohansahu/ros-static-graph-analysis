@@ -67,7 +67,7 @@ class ROSPrimitiveMatcher
 
   /* Summarize results
    */
-  std::optional<std::string> summarize() const;
+  std::optional<std::string> summarize(const std::string& base_filepath) const;
 
 }; // class ROSPrimitiveMatcher
 
