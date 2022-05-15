@@ -21,8 +21,10 @@ bool ROSPrimitiveMatcher::is_method(const std::string& function, const std::stri
   // check if this is defined in a header we want to ignore
   // @TODO make this less hardcoded and more extensible
   //  or, alternatively, figure out how to use ASTMatchers to avoid the need entirely...
-  if (filepath.rfind("/opt/ros/") == 0 && filepath.rfind("/include/ros/") != std::string::npos)
-    return false;
+  if (filepath.rfind("/opt/ros/") == 0)
+    if (filepath.rfind("/include/ros/") != std::string::npos
+        || filepath.rfind("/include/actionlib") != std::string::npos)
+      return false;
 
   // otherwise, it's a match
   return true;
