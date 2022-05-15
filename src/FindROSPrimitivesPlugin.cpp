@@ -45,8 +45,10 @@ bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
     return true;
 
   // check if this function is a match
+  std::string MethodName = Declaration->getQualifiedNameAsString();
+  clean_string(MethodName);
   const std::string Filename = Context->getSourceManager().getFilename(FullLocation).str();
-  if (!ROSMatcher.is_method(Declaration->getQualifiedNameAsString(), Filename))
+  if (!ROSMatcher.is_method(MethodName, Filename))
     return true;
 
   // this is a match; extract location informaiton
@@ -76,7 +78,7 @@ bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
   }
   
   // pass collected data back to our Matcher
-  ROSMatcher.add_method(Declaration->getQualifiedNameAsString(), Location, Args);
+  ROSMatcher.add_method(MethodName, Location, Args);
   return true;
 }
 
@@ -95,8 +97,10 @@ bool FindROSPrimitivesVisitor::VisitCXXConstructExpr(clang::CXXConstructExpr *Ca
     return true;
 
   // check if this function is a match
+  std::string ConstructorName = Declaration->getQualifiedNameAsString();
+  clean_string(ConstructorName);
   const std::string Filename = Context->getSourceManager().getFilename(FullLocation).str();
-  if (!ROSMatcher.is_constructor(Declaration->getQualifiedNameAsString(), Filename))
+  if (!ROSMatcher.is_constructor(ConstructorName, Filename))
     return true;
 
   // this is a match; extract location informaiton
@@ -126,7 +130,7 @@ bool FindROSPrimitivesVisitor::VisitCXXConstructExpr(clang::CXXConstructExpr *Ca
   }
   
   // pass collected data back to our Matcher
-  ROSMatcher.add_constructor(Declaration->getQualifiedNameAsString(), Location, Args);
+  ROSMatcher.add_constructor(ConstructorName, Location, Args);
   return true;
 }
 

@@ -31,6 +31,31 @@ inline void console_print(clang::CompilerInstance* CI,
                           const std::string& message,
                           const clang::DiagnosticsEngine::Level& level = clang::DiagnosticsEngine::Remark);
 
+/* Convenience method to clean a given qualified method, e.g. to remove Templates
+ */
+void clean_string(std::string& string)
+{
+  // recursively strip out '<...>' substrings
+  if (auto end = std::find(string.begin(), string.end(), '>');
+      end != string.end())
+  {
+    // iterate back until we get to the corresponding opening bracket
+    auto begin = end;
+    while (*(begin) != '<')
+    {
+      // check error conditions and exit (silently?) if so
+      if (begin == string.begin())
+        return;
+      --begin;
+    }
+    // erase all of the bracketed sections
+    string.erase(begin, end + 1);
+
+    // recurse upwards to next bracket (if any)
+    return clean_string(string);
+  }
+}
+
 /* Custom Recursive AST Visitor to analyze each declaration in the AS Tree.
  *
  * This class does the core evaluation of whether or not a given declaration

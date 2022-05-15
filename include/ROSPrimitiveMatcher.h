@@ -50,14 +50,16 @@ class ROSPrimitiveMatcher
     {"ros::init", "ros::Node"},
     {"nodelet::Nodelet::getNodeHandle", "ros::NodeHandle"},
     {"nodelet::Nodelet::getPrivateNodeHandle", "ros::NodeHandle"},
+    // Under evaluation:
   };
   const std::unordered_map<std::string,std::string> ROSConstructors {
+    // Vetted types:
     // Under evaluation:
     {"nodelet::Nodelet", "nodelet::Nodelet"},
-    {"actionlib::SimpleActionClient::SimpleActionClient", "actionlib::SimpleActionClient"},
-    {"actionlib::SimpleActionServer::SimpleActionServer", "actionlib::SimpleActionServer"},
-    {"actionlib::ActionClient::ActionClient", "actionlib::ActionClient"},
-    {"actionlib::ActionServer::ActionServer", "actionlib::ActionServer"},
+    {"actionlib::action_client::SimpleActionClient", "actionlib::SimpleActionClient"},
+    {"actionlib::action_server::SimpleActionServer", "actionlib::SimpleActionServer"},
+    {"actionlib::action_client::ActionClient", "actionlib::ActionClient"},
+    {"actionlib::action_server::ActionServer", "actionlib::ActionServer"},
     {"ros::NodeHandle::NodeHandle", "ros::NodeHandle"},
   };
 
