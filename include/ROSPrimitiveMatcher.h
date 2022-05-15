@@ -50,6 +50,8 @@ class ROSPrimitiveMatcher
     {"ros::init", "ros::Node"},
     {"nodelet::Nodelet::getNodeHandle", "ros::NodeHandle"},
     {"nodelet::Nodelet::getPrivateNodeHandle", "ros::NodeHandle"},
+  };
+  const std::unordered_map<std::string,std::string> ROSConstructors {
     // Under evaluation:
     {"nodelet::Nodelet", "nodelet::Nodelet"},
     {"actionlib::SimpleActionClient::SimpleActionClient", "actionlib::SimpleActionClient"},
@@ -66,11 +68,19 @@ class ROSPrimitiveMatcher
   
   /* Evaluate whether or not the given resolved function call and filename are matches.
    */
-  bool is_match(const std::string& function, const std::string& filepath) const;
+  bool is_method(const std::string& function, const std::string& filepath) const;
+
+  /* Evaluate whether or not the given resolved constructor call is a match.
+   */
+  bool is_constructor(const std::string& constructor, const std::string& filepath) const;
 
   /* Add newly matched metadata to current set.
    */
-  void add(const std::string& function, const LocType& location, const std::vector<ArgType>& args);
+  void add_method(const std::string& function, const LocType& location, const std::vector<ArgType>& args);
+
+  /* Add newly matched metadata for the given class constructor.
+   */
+  void add_constructor(const std::string& constructor, const LocType& location, const std::vector<ArgType>& args);
 
   /* Attempt to dump collected data.
    */
@@ -79,6 +89,10 @@ class ROSPrimitiveMatcher
   /* Summarize results
    */
   std::optional<std::string> summarize(const std::string& base_filepath) const;
+
+ private:
+
+  void add(const std::string& method, const LocType& location, const std::vector<ArgType>& args);
 
 }; // class ROSPrimitiveMatcher
 

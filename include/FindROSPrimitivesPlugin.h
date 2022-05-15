@@ -61,11 +61,15 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
    *
    * E.g.:
    *  - std::blah();
-   *
-   * TODO:
-   *  - Does this also cover member functions?
    */
   bool VisitCallExpr(clang::CallExpr *Call);
+ 
+  /* Evaluate a single Constructor Expression
+   *
+   * E.g.:
+   *  - foo::MyClass::MyClass(blah);
+   */
+  bool VisitCXXConstructExpr(clang::CXXConstructExpr *Call);
  
  private:
   // Context in the AST

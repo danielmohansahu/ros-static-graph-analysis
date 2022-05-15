@@ -12,7 +12,7 @@
 namespace find_ros_primitives
 {
 
-bool ROSPrimitiveMatcher::is_match(const std::string& function, const std::string& filepath) const
+bool ROSPrimitiveMatcher::is_method(const std::string& function, const std::string& filepath) const
 {
   // check if function name is a match
   if (ROSMethods.find(function) == ROSMethods.end())
@@ -28,14 +28,38 @@ bool ROSPrimitiveMatcher::is_match(const std::string& function, const std::strin
   return true;
 }
 
-void ROSPrimitiveMatcher::add(const std::string& function, const LocType& location, const std::vector<ArgType>& args)
+bool ROSPrimitiveMatcher::is_constructor(const std::string& constructor, const std::string& filepath) const
+{
+  // check if constructor declaration is a match
+  if (ROSConstructors.find(constructor) == ROSConstructors.end())
+    return false;
+
+  // check if this is defined in a header we want to ignore
+  // @TODO make this less hardcoded and more extensible
+  //  or, alternatively, figure out how to use ASTMatchers to avoid the need entirely...
+  if (filepath.rfind("/opt/ros/") == 0 && filepath.rfind("/include/ros/") != std::string::npos)
+    return false;
+
+  // otherwise, it's a match
+  return true;
+}
+
+void ROSPrimitiveMatcher::add_method(const std::string& function, const LocType& location, const std::vector<ArgType>& args)
 {
   // sanity check
   assert(ROSMethods.find(function) != ROSMethods.end());
+  this->add(ROSMethods.find(function)->second, location, args); 
+}
 
-  // get the primitive name
-  const std::string primitive = ROSMethods.find(function)->second;
+void ROSPrimitiveMatcher::add_constructor(const std::string& constructor, const LocType& location, const std::vector<ArgType>& args)
+{
+  // sanity check
+  assert(ROSConstructors.find(constructor) != ROSConstructors.end());
+  this->add(ROSConstructors.find(constructor)->second, location, args); 
+}
 
+void ROSPrimitiveMatcher::add(const std::string& primitive, const LocType& location, const std::vector<ArgType>& args)
+{
   // store this information in YAML format
   YAML::Node data;
   data["loc"] = location.as_yaml();

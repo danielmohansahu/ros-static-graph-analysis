@@ -47,7 +47,7 @@ bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
 
   // check if this function is a match
   const std::string Filename = Context->getSourceManager().getFilename(FullLocation).str();
-  if (!ROSMatcher.is_match(Function, Filename))
+  if (!ROSMatcher.is_method(Function, Filename))
     return true;
 
   // this is a match; extract location informaiton
@@ -77,7 +77,13 @@ bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
   }
   
   // pass collected data back to our Matcher
-  ROSMatcher.add(Function, Location, Args);
+  ROSMatcher.add_method(Function, Location, Args);
+  return true;
+}
+
+bool FindROSPrimitivesVisitor::VisitCXXConstructExpr(clang::CXXConstructExpr *Call)
+{
+  // @TODO
   return true;
 }
 
