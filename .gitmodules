@@ -1,3 +1,6 @@
 [submodule "test/src/ros_tutorials"]
 	path = test/src/ros_tutorials
 	url = https://github.com/ros/ros_tutorials.git
+[submodule "test/src/common_tutorials"]
+	path = test/src/common_tutorials
+	url = https://github.com/ros/common_tutorials.git
