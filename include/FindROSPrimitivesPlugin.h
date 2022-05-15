@@ -134,6 +134,10 @@ class FindROSPrimitivesConsumer : public clang::ASTConsumer
     // get collected metadata
     YAML::Node metadata = Visitor.GetMetadata();
 
+    // exit early if no data was found
+    if (metadata.size() == 0)
+      return;
+
     // write metadata to file (uniquely named based on current top level file)
     std::string filename = Filepath.stem().string() + std::string(METADATA_FILE);
     std::ofstream file(filename);
