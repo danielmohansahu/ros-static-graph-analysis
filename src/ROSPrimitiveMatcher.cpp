@@ -48,28 +48,42 @@ bool ROSPrimitiveMatcher::is_constructor(const std::string& constructor, const s
   return true;
 }
 
-void ROSPrimitiveMatcher::add_method(const std::string& function, const LocType& location, const std::vector<ArgType>& args)
+void ROSPrimitiveMatcher::add_method(const std::string& function,
+                                     const LocType& location,
+                                     const std::vector<ArgType>& args,
+                                     const int object_id)
 {
   // sanity check
   assert(ROSMethods.find(function) != ROSMethods.end());
-  this->add(ROSMethods.find(function)->second, location, args); 
+  auto data = add(location, args); 
+
+  // add call expression specific data
+  if (object_id >= 0)
+    data["object_id"] = object_id;
+  metadata[ROSMethods.find(function)->second].push_back(data);
 }
 
-void ROSPrimitiveMatcher::add_constructor(const std::string& constructor, const LocType& location, const std::vector<ArgType>& args)
+void ROSPrimitiveMatcher::add_constructor(const std::string& constructor,
+                                          const LocType& location,
+                                          const std::vector<ArgType>& args)
 {
   // sanity check
   assert(ROSConstructors.find(constructor) != ROSConstructors.end());
-  this->add(ROSConstructors.find(constructor)->second, location, args); 
+  auto data = this->add(location, args); 
+
+  // add constructor specific data
+  metadata[ROSConstructors.find(constructor)->second].push_back(data);
 }
 
-void ROSPrimitiveMatcher::add(const std::string& primitive, const LocType& location, const std::vector<ArgType>& args)
+YAML::Node ROSPrimitiveMatcher::add(const LocType& location,
+                                    const std::vector<ArgType>& args) const
 {
   // store this information in YAML format
   YAML::Node data;
   data["loc"] = location.as_yaml();
   for (const auto arg : args)
     data["args"].push_back(arg.as_yaml());
-  metadata[primitive].push_back(data);
+  return data;
 }
 
 void ROSPrimitiveMatcher::dump(const std::string& base_filepath) const

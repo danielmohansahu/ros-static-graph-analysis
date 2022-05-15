@@ -76,9 +76,22 @@ bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
         Call->getArg(i)->isDefaultArgument()
     });
   }
-  
+
+  // get unique identifier for the class we're calling this from
+  int ObjectID = -1;
+  {
+    // taken from:
+    //  https://clang.llvm.org/doxygen/ExprCXX_8cpp_source.html#l00650
+    const Expr *Callee = Call->getCallee()->IgnoreParens();
+    if (const auto *MemExpr = dyn_cast<MemberExpr>(Callee))
+      ObjectID = MemExpr->getBase()->getID(*Context);
+    if (const auto *BO = dyn_cast<BinaryOperator>(Callee))
+      if (BO->getOpcode() == BO_PtrMemD || BO->getOpcode() == BO_PtrMemI)
+        ObjectID = BO->getLHS()->getID(*Context);
+  }
+
   // pass collected data back to our Matcher
-  ROSMatcher.add_method(MethodName, Location, Args);
+  ROSMatcher.add_method(MethodName, Location, Args, ObjectID);
   return true;
 }
 

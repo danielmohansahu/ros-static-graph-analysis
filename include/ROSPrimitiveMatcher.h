@@ -78,11 +78,16 @@ class ROSPrimitiveMatcher
 
   /* Add newly matched metadata to current set.
    */
-  void add_method(const std::string& function, const LocType& location, const std::vector<ArgType>& args);
+  void add_method(const std::string& function,
+                  const LocType& location,
+                  const std::vector<ArgType>& args,
+                  const int object_id = -1);
 
   /* Add newly matched metadata for the given class constructor.
    */
-  void add_constructor(const std::string& constructor, const LocType& location, const std::vector<ArgType>& args);
+  void add_constructor(const std::string& constructor,
+                       const LocType& location,
+                       const std::vector<ArgType>& args);
 
   /* Attempt to dump collected data.
    */
@@ -94,7 +99,8 @@ class ROSPrimitiveMatcher
 
  private:
 
-  void add(const std::string& method, const LocType& location, const std::vector<ArgType>& args);
+  YAML::Node add(const LocType& location,
+                 const std::vector<ArgType>& args) const;
 
 }; // class ROSPrimitiveMatcher
 
