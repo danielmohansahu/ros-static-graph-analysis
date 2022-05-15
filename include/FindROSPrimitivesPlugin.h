@@ -8,24 +8,19 @@
 #pragma once
 
 // STL
-#include <fstream>
 #include <string>
-#include <unordered_map>
-#include <filesystem>
-
-// YAML
-#include <yaml-cpp/yaml.h>
 
 // CLANG
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Frontend/CompilerInstance.h"
 
+// Custom
+#include "Types.h"
+#include "ROSPrimitiveMatcher.h"
+
 // maximum number of characters per output line
 #define MAXCHARS 512
-
-// file name to write metadata
-#define METADATA_FILE "_ros_primitives.yaml"
 
 namespace find_ros_primitives
 {
@@ -45,46 +40,27 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
 {
  public:
   explicit FindROSPrimitivesVisitor(clang::CompilerInstance *CI)
-    : Context(&CI->getASTContext()), CI(CI), Policy(clang::PrintingPolicy(clang::LangOptions())),
-      ROSMethods( {
-        {"ros::NodeHandle::advertise", "ros::Publisher"},
-        {"ros::NodeHandle::subscribe", "ros::Subscriber"},
-        {"ros::NodeHandle::advertiseService", "ros::ServiceServer"},
-        {"ros::NodeHandle::serviceClient", "ros::ServiceClient"},
-        {"ros::NodeHandle::param", "ros::param"},
-        {"ros::NodeHandle::deleteParam", "ros::param"},
-        {"ros::NodeHandle::getParam", "ros::param"},
-        {"ros::NodeHandle::getParamCached", "ros::param"},
-        {"ros::NodeHandle::hasParam", "ros::param"},
-        {"ros::NodeHandle::searchParam", "ros::param"},
-        {"ros::NodeHandle::setParam", "ros::param"}
-      } )
+    : Context(&CI->getASTContext()), CI(CI), Policy(clang::PrintingPolicy(clang::LangOptions()))
   {
     // format for C++
     Policy.adjustForCPlusPlus();
   }
 
-  /* Accessor for the collected metadata.
+  /* Save the collated metadata to file.
    */
-  YAML::Node GetMetadata()
+  void DumpMetadata(const std::string& InFile)
   {
-    return Metadata;
+    ROSMatcher.dump(InFile);
+
+    // also print a summary to console
+    if (const auto summary = ROSMatcher.summarize(); summary)
+      console_print(CI, *summary);
   }
 
   /* Evaluate a single member function call.
    *
-   * I.e.:
-   *  - ros::NodeHandle::advertise
-   *  - ros::NodeHandle::subscribe
-   *  - ros::NodeHandle::advertiseService
-   *  - ros::NodeHandle::serviceClient
-   *  - ros::NodeHandle::param
-   *  - ros::NodeHandle::deleteParam
-   *  - ros::NodeHandle::getParam
-   *  - ros::NodeHandle::getParamCached
-   *  - ros::NodeHandle::hasParam
-   *  - ros::NodeHandle::searchParam
-   *  - ros::NodeHandle::setParam
+   * E.g.:
+   *  - foo::bar::initialize();
    *
    * TODO:
    *  - Does this also cover class constructors?
@@ -93,8 +69,8 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
 
   /* Evaluate a single function call (any)
    *
-   * I.e.:
-   *  - ros::init
+   * E.g.:
+   *  - std::blah();
    *
    * TODO:
    *  - Does this also cover member functions?
@@ -108,10 +84,8 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
   clang::CompilerInstance *CI;
   // Language formatting
   clang::PrintingPolicy Policy;
-  // collection of all the methods we're looking for
-  std::unordered_map<std::string,std::string> ROSMethods;
-  // YAML representation of collected metadata
-  YAML::Node Metadata;
+  // ROS matching class
+  ROSPrimitiveMatcher ROSMatcher;
 };
 
 /* Custom AST Consumer to configure calls to the Visitor.
@@ -121,7 +95,7 @@ class FindROSPrimitivesConsumer : public clang::ASTConsumer
  public:
   FindROSPrimitivesConsumer(clang::CompilerInstance* CI,
                             llvm::StringRef InFile)
-      : Visitor(CI), CI(CI), Filepath(std::filesystem::path(InFile))
+      : Visitor(CI), CI(CI), InFile(InFile)
   {}
 
   /* Core method to analyze a given element in the AST.
@@ -131,18 +105,8 @@ class FindROSPrimitivesConsumer : public clang::ASTConsumer
     // process the given translation unit
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
 
-    // get collected metadata
-    YAML::Node metadata = Visitor.GetMetadata();
-
-    // exit early if no data was found
-    if (metadata.size() == 0)
-      return;
-
-    // write metadata to file (uniquely named based on current top level file)
-    std::string filename = Filepath.stem().string() + std::string(METADATA_FILE);
-    std::ofstream file(filename);
-    file << metadata;
-    file.close();
+    // dump metadata to file
+    Visitor.DumpMetadata(InFile);
   }
 
  private:
@@ -151,7 +115,7 @@ class FindROSPrimitivesConsumer : public clang::ASTConsumer
   // Visitor instance doing the processing
   FindROSPrimitivesVisitor Visitor;
   // Top level file we're currently investigating
-  std::filesystem::path Filepath;
+  std::string InFile;
 };
 
 /* AST Plugin Action - this is our top level class that interfaces with the Compiler.

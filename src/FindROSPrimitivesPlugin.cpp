@@ -32,71 +32,54 @@ inline void console_print(clang::CompilerInstance* CI,
 
 bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *Call)
 {
-  if (const auto match = ROSMethods.find(Call->getMethodDecl()->getQualifiedNameAsString())
-      ; match != ROSMethods.end())
+
+  // get fully qualified function name and file location for match
+  const std::string Function = Call->getMethodDecl()->getQualifiedNameAsString();
+  const FullSourceLoc FullLocation = Context->getFullLoc(Call->getBeginLoc());
+
+  // reject invalid file locations
+  if (!FullLocation.isValid())
+    return true;
+
+  // check if this function is a match
+  const std::string Filename = Context->getSourceManager().getFilename(FullLocation).str();
+  if (!ROSMatcher.is_match(Function, Filename))
+    return true;
+
+  // this is a match; extract location informaiton
+  LocType Location {Filename, FullLocation.getSpellingLineNumber(), FullLocation.getSpellingColumnNumber()};
+
+  // extract argument information
+  // @TODO extract argument type and try to resolve values further
+  std::vector<ArgType> Args;
+  for (unsigned i = 0; i != Call->getNumArgs(); ++i)
   {
-    // check if this location definition is valid; return early otherwise
-    FullSourceLoc FullLocation = Context->getFullLoc(Call->getBeginLoc());
-    if (!FullLocation.isValid())
-      return true;
+    // get argument value (or default)
+    std::string TypeS;
+    llvm::raw_string_ostream s(TypeS);
+    if (Call->getArg(i)->isDefaultArgument())
+      Call->getMethodDecl()->getParamDecl(i)->getDefaultArg()->printPretty(s, 0, Policy);
+    else
+      Call->getArg(i)->printPretty(s, 0, Policy); 
 
-    // check if this is defined in a header we want to ignore
-    // @TODO make this less hardcoded and more extensible
-    //  or, alternatively, figure out how to use ASTMatchers to avoid the need entirely...
-    const std::string filename = Context->getSourceManager().getFilename(FullLocation).str();
-    if (filename.rfind("/opt/ros/") == 0 && filename.rfind("/include/ros/") != std::string::npos)
-      return true;
-
-    // if we made it this far this is a good match - construct message
-    const auto [class_function_call, class_type] = *match;
-    std::stringstream ss;
-    // display function name and location message
-    ss << "Found " << class_type << " via " << class_function_call;
-    ss << "\n\t\t loc:  " << FullLocation.getSpellingLineNumber() << ":"
-       << FullLocation.getSpellingColumnNumber() << " in " << filename;
-
-    // store metadata
-    YAML::Node instance;
-    instance["loc"]["filename"] = filename;
-    instance["loc"]["line"] = FullLocation.getSpellingLineNumber();
-    instance["loc"]["column"] = FullLocation.getSpellingColumnNumber();
-
-    // extract argument information
-    ss << "\n\t\t args: (";
-    for (unsigned i = 0; i != Call->getNumArgs(); ++i)
-    {
-      // get argument value (or default)
-      std::string TypeS;
-      llvm::raw_string_ostream s(TypeS);
-      if (Call->getArg(i)->isDefaultArgument())
-        Call->getMethodDecl()->getParamDecl(i)->getDefaultArg()->printPretty(s, 0, Policy);
-      else
-        Call->getArg(i)->printPretty(s, 0, Policy); 
-
-      // display argument name and value
-      ss << Call->getMethodDecl()->getParamDecl(i)->getNameAsString() << "=" << s.str();
-      if (i < Call->getNumArgs() - 1)
-        ss << ", ";
-
-      // save to metadata structure
-      YAML::Node arg_repr;
-      arg_repr["name"] = Call->getMethodDecl()->getParamDecl(i)->getNameAsString();
-      arg_repr["value"] = s.str();
-      instance["args"].push_back(arg_repr);
-    }
-    ss << ")";
-
-    // display function argument values
-    console_print(CI, ss.str());
-
-    // store as metadata
-    Metadata[class_type].push_back(instance);
+    // push this back to our list of args
+    Args.push_back({
+        i,
+        Call->getMethodDecl()->getParamDecl(i)->getNameAsString(),
+        s.str(),
+        "",
+        Call->getArg(i)->isDefaultArgument()
+    });
   }
+  
+  // pass collected data back to our Matcher
+  ROSMatcher.add(Function, Location, Args);
   return true;
 }
 
 bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
 {
+  // @TODO!
   return true;
 }
 
