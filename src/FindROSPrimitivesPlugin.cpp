@@ -59,21 +59,34 @@ bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
   std::vector<ArgType> Args;
   for (unsigned i = 0; i != Call->getNumArgs(); ++i)
   {
-    // get argument value (or default)
+    // initialize pretty print ostream object
     std::string TypeS;
     llvm::raw_string_ostream s(TypeS);
+
+    // get argument value (or default)
+    clang::Expr* Arg;
     if (Call->getArg(i)->isDefaultArgument())
-      Declaration->getParamDecl(i)->getDefaultArg()->printPretty(s, 0, Policy);
+      Arg = Declaration->getParamDecl(i)->getDefaultArg();
     else
-      Call->getArg(i)->printPretty(s, 0, Policy); 
+      Arg = Call->getArg(i);
+
+    // get the raw value as printed
+    Arg->printPretty(s, 0, Policy);
+    std::string raw_value = s.str();
+
+    // try to evaluate
+    std::string value = raw_value;
+    if (clang::Expr::EvalResult res;
+        Arg->EvaluateAsRValue(res, *Context, /*don't_break_things=*/true))
+      value = res.Val.getAsString(*Context, Arg->getType());
 
     // push this back to our list of args
     Args.push_back({
-        i,
         Declaration->getParamDecl(i)->getNameAsString(),
-        s.str(),
-        "",
-        Call->getArg(i)->isDefaultArgument()
+        raw_value,
+        value,
+        QualType::getAsString(Arg->getType().split(), Policy),
+        Call->getArg(i)->isDefaultArgument(),
     });
   }
 
@@ -124,21 +137,34 @@ bool FindROSPrimitivesVisitor::VisitCXXConstructExpr(clang::CXXConstructExpr *Ca
   std::vector<ArgType> Args;
   for (unsigned i = 0; i != Call->getNumArgs(); ++i)
   {
-    // get argument value (or default)
+    // initialize pretty print ostream object
     std::string TypeS;
     llvm::raw_string_ostream s(TypeS);
+
+    // get argument value (or default)
+    clang::Expr* Arg;
     if (Call->getArg(i)->isDefaultArgument())
-      Declaration->getParamDecl(i)->getDefaultArg()->printPretty(s, 0, Policy);
+      Arg = Declaration->getParamDecl(i)->getDefaultArg();
     else
-      Call->getArg(i)->printPretty(s, 0, Policy); 
+      Arg = Call->getArg(i);
+
+    // get the raw value as printed
+    Arg->printPretty(s, 0, Policy);
+    std::string raw_value = s.str();
+
+    // try to evaluate
+    std::string value = raw_value;
+    if (clang::Expr::EvalResult res;
+        Arg->EvaluateAsRValue(res, *Context, /*don't_break_things=*/true))
+      value = res.Val.getAsString(*Context, Arg->getType());
 
     // push this back to our list of args
     Args.push_back({
-        i,
         Declaration->getParamDecl(i)->getNameAsString(),
-        s.str(),
-        "",
-        Call->getArg(i)->isDefaultArgument()
+        raw_value,
+        value,
+        QualType::getAsString(Arg->getType().split(), Policy),
+        Call->getArg(i)->isDefaultArgument(),
     });
   }
 

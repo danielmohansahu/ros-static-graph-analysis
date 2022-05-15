@@ -18,23 +18,29 @@ namespace find_ros_primitives
  */
 struct ArgType
 {
-  unsigned int index; // argument order information
-  std::string name;   // argument name
-  std::string value;  // argument value
-  std::string type;   // argument type
-  bool default_value; // whether or not this is the default value (i.e. unset)
+  std::string name;       // argument name
+  std::string raw_value;  // argument value as written
+  std::string value;      // our attempt at resolving this argument
+  std::string type;       // argument type
+  bool default_value;     // whether or not this is the default value (i.e. unset)
 
   // constructor
   ArgType()=delete;
-  ArgType(unsigned int index, const std::string& name, const std::string& value, const std::string& type, bool default_value)
-    : index(index), name(name), value(value), type(type), default_value(default_value) {}
+  ArgType(const std::string& name,
+          const std::string& raw_value,
+          const std::string& value,
+          const std::string& type,
+          bool default_value)
+    : name(name), raw_value(raw_value), value(value),
+      type(type), default_value(default_value)
+  {}
 
   // convert to a YAML node
   YAML::Node as_yaml() const
   {
     YAML::Node res;
-    res["index"] = index;
     res["name"] = name;
+    res["raw_value"] = raw_value;
     res["value"] = value;
     res["type"] = type;
     res["default_value"] = default_value;
