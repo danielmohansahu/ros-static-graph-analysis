@@ -19,6 +19,7 @@ RUN apt-get update -qq \
 RUN apt-get update -qq \
     && apt-get install -q -y \
       clang \
+      clang-tools \
       libclang-dev \
       cmake \
       libyaml-cpp-dev \
