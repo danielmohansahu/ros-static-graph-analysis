@@ -38,7 +38,6 @@ bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
     return true;
 
   // get fully qualified function name and file location for match
-  const std::string Function = Declaration->getQualifiedNameAsString();
   const FullSourceLoc FullLocation = Context->getFullLoc(Call->getBeginLoc());
 
   // reject invalid file locations
@@ -47,7 +46,7 @@ bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
 
   // check if this function is a match
   const std::string Filename = Context->getSourceManager().getFilename(FullLocation).str();
-  if (!ROSMatcher.is_method(Function, Filename))
+  if (!ROSMatcher.is_method(Declaration->getQualifiedNameAsString(), Filename))
     return true;
 
   // this is a match; extract location informaiton
@@ -77,13 +76,57 @@ bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
   }
   
   // pass collected data back to our Matcher
-  ROSMatcher.add_method(Function, Location, Args);
+  ROSMatcher.add_method(Declaration->getQualifiedNameAsString(), Location, Args);
   return true;
 }
 
 bool FindROSPrimitivesVisitor::VisitCXXConstructExpr(clang::CXXConstructExpr *Call)
 {
-  // @TODO
+  // @TODO try to reduce the amount of duplicate code between this and the CallExpr method.
+
+  // Get declaration for this constructor expression
+  CXXConstructorDecl* Declaration = Call->getConstructor();
+
+  // get fully qualified function name and file location for match
+  const FullSourceLoc FullLocation = Context->getFullLoc(Call->getBeginLoc());
+
+  // reject invalid file locations
+  if (!FullLocation.isValid())
+    return true;
+
+  // check if this function is a match
+  const std::string Filename = Context->getSourceManager().getFilename(FullLocation).str();
+  if (!ROSMatcher.is_constructor(Declaration->getQualifiedNameAsString(), Filename))
+    return true;
+
+  // this is a match; extract location informaiton
+  LocType Location {Filename, FullLocation.getSpellingLineNumber(), FullLocation.getSpellingColumnNumber()};
+
+  // extract argument information
+  // @TODO extract argument type and try to resolve values further
+  std::vector<ArgType> Args;
+  for (unsigned i = 0; i != Call->getNumArgs(); ++i)
+  {
+    // get argument value (or default)
+    std::string TypeS;
+    llvm::raw_string_ostream s(TypeS);
+    if (Call->getArg(i)->isDefaultArgument())
+      Declaration->getParamDecl(i)->getDefaultArg()->printPretty(s, 0, Policy);
+    else
+      Call->getArg(i)->printPretty(s, 0, Policy); 
+
+    // push this back to our list of args
+    Args.push_back({
+        i,
+        Declaration->getParamDecl(i)->getNameAsString(),
+        s.str(),
+        "",
+        Call->getArg(i)->isDefaultArgument()
+    });
+  }
+  
+  // pass collected data back to our Matcher
+  ROSMatcher.add_constructor(Declaration->getQualifiedNameAsString(), Location, Args);
   return true;
 }
 
