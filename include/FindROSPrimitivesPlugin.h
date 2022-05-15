@@ -11,6 +11,7 @@
 #include <fstream>
 #include <string>
 #include <unordered_map>
+#include <filesystem>
 
 // YAML
 #include <yaml-cpp/yaml.h>
@@ -43,8 +44,8 @@ inline void console_print(clang::CompilerInstance* CI,
 class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimitivesVisitor>
 {
  public:
-  explicit FindROSPrimitivesVisitor(clang::ASTContext *Context, clang::CompilerInstance *CI)
-    : Context(Context), CI(CI), Policy(clang::PrintingPolicy(clang::LangOptions())),
+  explicit FindROSPrimitivesVisitor(clang::CompilerInstance *CI)
+    : Context(&CI->getASTContext()), CI(CI), Policy(clang::PrintingPolicy(clang::LangOptions())),
       ROSMethods( {
         {"ros::NodeHandle::advertise", "ros::Publisher"},
         {"ros::NodeHandle::subscribe", "ros::Subscriber"},
@@ -118,10 +119,9 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
 class FindROSPrimitivesConsumer : public clang::ASTConsumer
 {
  public:
-  FindROSPrimitivesConsumer(clang::ASTContext *Context,
-                            clang::CompilerInstance *Instance,
-                            std::set<std::string> ParsedTemplates)
-      : Visitor(Context, Instance), CI(CI), ParsedTemplates(ParsedTemplates)
+  FindROSPrimitivesConsumer(clang::CompilerInstance* CI,
+                            llvm::StringRef InFile)
+      : Visitor(CI), CI(CI), Filepath(std::filesystem::path(InFile))
   {}
 
   /* Core method to analyze a given element in the AST.
@@ -134,18 +134,20 @@ class FindROSPrimitivesConsumer : public clang::ASTConsumer
     // get collected metadata
     YAML::Node metadata = Visitor.GetMetadata();
 
-    // write metadata to file
-    std::string filename = std::to_string(Context.getTranslationUnitDecl()->getGlobalID()) + std::string(METADATA_FILE);
+    // write metadata to file (uniquely named based on current top level file)
+    std::string filename = Filepath.stem().string() + std::string(METADATA_FILE);
     std::ofstream file(filename);
     file << metadata;
     file.close();
   }
 
  private:
-  // Some of these are currently unused, but may be required at later stages of development.
-  std::set<std::string> ParsedTemplates;
+  // Instance of the compiler, for general state information
   clang::CompilerInstance* CI;
+  // Visitor instance doing the processing
   FindROSPrimitivesVisitor Visitor;
+  // Top level file we're currently investigating
+  std::filesystem::path Filepath;
 };
 
 /* AST Plugin Action - this is our top level class that interfaces with the Compiler.
@@ -157,9 +159,9 @@ class FindROSPrimitivesAction : public clang::PluginASTAction
   /* Factory method to return our custom consumer.
    */
   std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance &CI,
-                                                        llvm::StringRef) override
+                                                        llvm::StringRef InFile) override
   {
-    return std::make_unique<FindROSPrimitivesConsumer>(&CI.getASTContext(), &CI, ParsedTemplates);
+    return std::make_unique<FindROSPrimitivesConsumer>(&CI, InFile);
   }
 
   /* Parse command line input arguments.
