@@ -34,7 +34,7 @@ namespace find_ros_primitives
 class ROSPrimitiveMatcher
 {
   // collection of all the methods we're looking for
-  std::unordered_map<std::string,std::string> ROSMethods {
+  const std::unordered_map<std::string,std::string> ROSMethods {
     {"ros::NodeHandle::advertise", "ros::Publisher"},
     {"ros::NodeHandle::subscribe", "ros::Subscriber"},
     {"ros::NodeHandle::advertiseService", "ros::ServiceServer"},
@@ -45,7 +45,8 @@ class ROSPrimitiveMatcher
     {"ros::NodeHandle::getParamCached", "ros::param"},
     {"ros::NodeHandle::hasParam", "ros::param"},
     {"ros::NodeHandle::searchParam", "ros::param"},
-    {"ros::NodeHandle::setParam", "ros::param"}
+    {"ros::NodeHandle::setParam", "ros::param"},
+    {"ros::init", "ros::Node"}
   };
 
   // YAML representation of collected metadata

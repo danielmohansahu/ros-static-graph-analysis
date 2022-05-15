@@ -30,11 +30,15 @@ inline void console_print(clang::CompilerInstance* CI,
   D.Report(D.getCustomDiagID(level, msg));
 }
 
-bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *Call)
+bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
 {
+  // get base method declaration (if extant)
+  FunctionDecl* Declaration = nullptr;
+  if (Declaration = Call->getDirectCallee(); !Declaration)
+    return true;
 
   // get fully qualified function name and file location for match
-  const std::string Function = Call->getMethodDecl()->getQualifiedNameAsString();
+  const std::string Function = Declaration->getQualifiedNameAsString();
   const FullSourceLoc FullLocation = Context->getFullLoc(Call->getBeginLoc());
 
   // reject invalid file locations
@@ -58,14 +62,14 @@ bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *
     std::string TypeS;
     llvm::raw_string_ostream s(TypeS);
     if (Call->getArg(i)->isDefaultArgument())
-      Call->getMethodDecl()->getParamDecl(i)->getDefaultArg()->printPretty(s, 0, Policy);
+      Declaration->getParamDecl(i)->getDefaultArg()->printPretty(s, 0, Policy);
     else
       Call->getArg(i)->printPretty(s, 0, Policy); 
 
     // push this back to our list of args
     Args.push_back({
         i,
-        Call->getMethodDecl()->getParamDecl(i)->getNameAsString(),
+        Declaration->getParamDecl(i)->getNameAsString(),
         s.str(),
         "",
         Call->getArg(i)->isDefaultArgument()
@@ -74,12 +78,6 @@ bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *
   
   // pass collected data back to our Matcher
   ROSMatcher.add(Function, Location, Args);
-  return true;
-}
-
-bool FindROSPrimitivesVisitor::VisitCallExpr(clang::CallExpr *Call)
-{
-  // @TODO!
   return true;
 }
 

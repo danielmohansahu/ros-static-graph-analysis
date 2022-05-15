@@ -57,16 +57,6 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
       console_print(CI, *summary);
   }
 
-  /* Evaluate a single member function call.
-   *
-   * E.g.:
-   *  - foo::bar::initialize();
-   *
-   * TODO:
-   *  - Does this also cover class constructors?
-   */
-  bool VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *Call);
-
   /* Evaluate a single function call (any)
    *
    * E.g.:
