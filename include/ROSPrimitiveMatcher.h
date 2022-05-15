@@ -35,6 +35,7 @@ class ROSPrimitiveMatcher
 {
   // collection of all the methods we're looking for
   const std::unordered_map<std::string,std::string> ROSMethods {
+    // Vetted types:
     {"ros::NodeHandle::advertise", "ros::Publisher"},
     {"ros::NodeHandle::subscribe", "ros::Subscriber"},
     {"ros::NodeHandle::advertiseService", "ros::ServiceServer"},
@@ -46,7 +47,16 @@ class ROSPrimitiveMatcher
     {"ros::NodeHandle::hasParam", "ros::param"},
     {"ros::NodeHandle::searchParam", "ros::param"},
     {"ros::NodeHandle::setParam", "ros::param"},
-    {"ros::init", "ros::Node"}
+    {"ros::init", "ros::Node"},
+    {"nodelet::Nodelet::getNodeHandle", "ros::NodeHandle"},
+    {"nodelet::Nodelet::getPrivateNodeHandle", "ros::NodeHandle"},
+    // Under evaluation:
+    {"nodelet::Nodelet", "nodelet::Nodelet"},
+    {"actionlib::SimpleActionClient::SimpleActionClient", "actionlib::SimpleActionClient"},
+    {"actionlib::SimpleActionServer::SimpleActionServer", "actionlib::SimpleActionServer"},
+    {"actionlib::ActionClient::ActionClient", "actionlib::ActionClient"},
+    {"actionlib::ActionServer::ActionServer", "actionlib::ActionServer"},
+    {"ros::NodeHandle::NodeHandle", "ros::NodeHandle"},
   };
 
   // YAML representation of collected metadata
