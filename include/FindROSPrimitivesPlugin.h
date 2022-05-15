@@ -24,7 +24,7 @@
 #define MAXCHARS 512
 
 // file name to write metadata
-#define METADATA_FILE "ros_primitives.yaml"
+#define METADATA_FILE "_ros_primitives.yaml"
 
 namespace find_ros_primitives
 {
@@ -46,17 +46,17 @@ class FindROSPrimitivesVisitor : public clang::RecursiveASTVisitor<FindROSPrimit
   explicit FindROSPrimitivesVisitor(clang::ASTContext *Context, clang::CompilerInstance *CI)
     : Context(Context), CI(CI), Policy(clang::PrintingPolicy(clang::LangOptions())),
       ROSMethods( {
-        {"ros::NodeHandle::advertise", " ros::Publisher creation"},
-        {"ros::NodeHandle::subscribe", " ros::Subscriber creation"},
-        {"ros::NodeHandle::advertiseService", " ros::ServiceServer creation"},
-        {"ros::NodeHandle::serviceClient", " ros::ServiceClient creation"},
-        {"ros::NodeHandle::param", " ros::param access"},
-        {"ros::NodeHandle::deleteParam", " ros::param deletion"},
-        {"ros::NodeHandle::getParam", " ros::param access"},
-        {"ros::NodeHandle::getParamCached", " ros::param access"},
-        {"ros::NodeHandle::hasParam", " ros::param access"},
-        {"ros::NodeHandle::searchParam", " ros::param access"},
-        {"ros::NodeHandle::setParam", " ros::param modification"}
+        {"ros::NodeHandle::advertise", "ros::Publisher"},
+        {"ros::NodeHandle::subscribe", "ros::Subscriber"},
+        {"ros::NodeHandle::advertiseService", "ros::ServiceServer"},
+        {"ros::NodeHandle::serviceClient", "ros::ServiceClient"},
+        {"ros::NodeHandle::param", "ros::param"},
+        {"ros::NodeHandle::deleteParam", "ros::param"},
+        {"ros::NodeHandle::getParam", "ros::param"},
+        {"ros::NodeHandle::getParamCached", "ros::param"},
+        {"ros::NodeHandle::hasParam", "ros::param"},
+        {"ros::NodeHandle::searchParam", "ros::param"},
+        {"ros::NodeHandle::setParam", "ros::param"}
       } )
   {
     // format for C++
@@ -135,7 +135,8 @@ class FindROSPrimitivesConsumer : public clang::ASTConsumer
     YAML::Node metadata = Visitor.GetMetadata();
 
     // write metadata to file
-    std::ofstream file(METADATA_FILE);
+    std::string filename = std::to_string(Context.getTranslationUnitDecl()->getGlobalID()) + std::string(METADATA_FILE);
+    std::ofstream file(filename);
     file << metadata;
     file.close();
   }

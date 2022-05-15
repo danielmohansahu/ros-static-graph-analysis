@@ -48,12 +48,18 @@ bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *
       return true;
 
     // if we made it this far this is a good match - construct message
-    const auto [class_name, class_message] = *match;
+    const auto [class_function_call, class_type] = *match;
     std::stringstream ss;
     // display function name and location message
-    ss << "Found " << class_name << class_message;
+    ss << "Found " << class_type << " via " << class_function_call;
     ss << "\n\t\t loc:  " << FullLocation.getSpellingLineNumber() << ":"
        << FullLocation.getSpellingColumnNumber() << " in " << filename;
+
+    // store metadata
+    YAML::Node instance;
+    instance["loc"]["filename"] = filename;
+    instance["loc"]["line"] = FullLocation.getSpellingLineNumber();
+    instance["loc"]["column"] = FullLocation.getSpellingColumnNumber();
 
     // extract argument information
     ss << "\n\t\t args: (";
@@ -71,11 +77,20 @@ bool FindROSPrimitivesVisitor::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *
       ss << Call->getMethodDecl()->getParamDecl(i)->getNameAsString() << "=" << s.str();
       if (i < Call->getNumArgs() - 1)
         ss << ", ";
+
+      // save to metadata structure
+      YAML::Node arg_repr;
+      arg_repr["name"] = Call->getMethodDecl()->getParamDecl(i)->getNameAsString();
+      arg_repr["value"] = s.str();
+      instance["args"].push_back(arg_repr);
     }
     ss << ")";
 
     // display function argument values
     console_print(CI, ss.str());
+
+    // store as metadata
+    Metadata[class_type].push_back(instance);
   }
   return true;
 }
