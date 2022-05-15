@@ -54,13 +54,13 @@ class ROSPrimitiveMatcher
   };
   const std::unordered_map<std::string,std::string> ROSConstructors {
     // Vetted types:
+    {"actionlib::SimpleActionClient::SimpleActionClient", "actionlib::SimpleActionClient"},
+    {"actionlib::SimpleActionServer::SimpleActionServer", "actionlib::SimpleActionServer"},
+    {"ros::NodeHandle::NodeHandle", "ros::NodeHandle"},
     // Under evaluation:
     {"nodelet::Nodelet", "nodelet::Nodelet"},
-    {"actionlib::action_client::SimpleActionClient", "actionlib::SimpleActionClient"},
-    {"actionlib::action_server::SimpleActionServer", "actionlib::SimpleActionServer"},
-    {"actionlib::action_client::ActionClient", "actionlib::ActionClient"},
-    {"actionlib::action_server::ActionServer", "actionlib::ActionServer"},
-    {"ros::NodeHandle::NodeHandle", "ros::NodeHandle"},
+    {"actionlib::ActionClient::ActionClient", "actionlib::ActionClient"},
+    {"actionlib::ActionServer::ActionServer", "actionlib::ActionServer"},
   };
 
   // YAML representation of collected metadata
