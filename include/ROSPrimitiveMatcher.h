@@ -87,7 +87,8 @@ class ROSPrimitiveMatcher
    */
   void add_constructor(const std::string& constructor,
                        const LocType& location,
-                       const std::vector<ArgType>& args);
+                       const std::vector<ArgType>& args,
+                       const int object_id);
 
   /* Attempt to dump collected data.
    */

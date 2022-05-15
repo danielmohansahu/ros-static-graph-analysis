@@ -65,13 +65,15 @@ void ROSPrimitiveMatcher::add_method(const std::string& function,
 
 void ROSPrimitiveMatcher::add_constructor(const std::string& constructor,
                                           const LocType& location,
-                                          const std::vector<ArgType>& args)
+                                          const std::vector<ArgType>& args,
+                                          const int object_id)
 {
   // sanity check
   assert(ROSConstructors.find(constructor) != ROSConstructors.end());
   auto data = this->add(location, args); 
 
   // add constructor specific data
+  data["object_id"] = object_id;
   metadata[ROSConstructors.find(constructor)->second].push_back(data);
 }
 

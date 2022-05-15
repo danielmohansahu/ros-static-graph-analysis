@@ -141,9 +141,13 @@ bool FindROSPrimitivesVisitor::VisitCXXConstructExpr(clang::CXXConstructExpr *Ca
         Call->getArg(i)->isDefaultArgument()
     });
   }
+
+  // get the unique ID of the resulting object
+  // @TODO this doesn't seem right...
+  const int ObjectID = Call->getExprStmt()->getID(*Context);
   
   // pass collected data back to our Matcher
-  ROSMatcher.add_constructor(ConstructorName, Location, Args);
+  ROSMatcher.add_constructor(ConstructorName, Location, Args, ObjectID);
   return true;
 }
 
